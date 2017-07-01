@@ -43,14 +43,14 @@ public class TagFamily
 
     /** The codes array is not copied internally and so must not be
      * modified externally. **/
-    public TagFamily(int bits, int minimumHammingDistance, long codes[])
+    public TagFamily(int bits, int minimumHammingDistance, long[] codes2)
     {
         this.bits = bits;
         this.d = (int) Math.sqrt(bits);
         assert(d*d == bits);
 
         this.minimumHammingDistance = minimumHammingDistance;
-        this.codes = codes;
+        this.codes = codes2;
     }
 
     public void setErrorRecoveryBits(int b)
@@ -66,7 +66,8 @@ public class TagFamily
     /** if the bits in w were arranged in a d*d grid and that grid was
      * rotated, what would the new bits in w be?
      * The bits are organized like this (for d = 3):
-     *
+     * Bit0 is the least significant bit
+     * 
      *  8 7 6       2 5 8      0 1 2
      *  5 4 3  ==>  1 4 7 ==>  3 4 5    (rotate90 applied twice)
      *  2 1 0       0 3 6      6 7 8
