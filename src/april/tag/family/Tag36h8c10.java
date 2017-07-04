@@ -1,7 +1,7 @@
 package april.tag.family;
 
 import april.tag.TagFamily;
-
+//WARN: calculation had not finished
 /** Tag family with 23405 distinct codes.
     V0=8245518521806949917
     bits: 36,  minimum hamming: 8,  minimum complexity: 10

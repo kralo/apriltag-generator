@@ -45,7 +45,7 @@ public class TagFamilyGenerator {
 
 	public static void main(String args[]) {
 		if (args.length < 2) {
-			System.out.printf("usage: <nbits> <minhammingdistance> <mincomplexity>\n");
+			System.out.printf("usage: <nbits> <minhammingdistance> <mincomplexity> <number of rounds>\n");
 			System.out.printf("(For all standard tags, nbits is a square.)\n");
 			return;
 		}
@@ -212,7 +212,7 @@ public class TagFamilyGenerator {
 		System.arraycopy(codelist, 0, codes, 0, codes.length);
 		TagFamily tagFamily = new TagFamily(nbits, minhamming, codes);
 
-		if (false) {
+		if (true) {
 			try {
 				tagFamily.writeAllImages("/tmp");
 				tagFamily.writeAllImagesMosaic("/tmp/mosaic.png");
@@ -229,7 +229,7 @@ public class TagFamilyGenerator {
 		String cname = String.format("Tag%dh%dc%d", nbits, minhamming, mincomplexity);
 		PrintStream out = null;
 		try {
-			out = new PrintStream(new FileOutputStream("/tmp/apriltags/" + cname + appendName + ".java", false));
+			out = new PrintStream(new FileOutputStream("/tmp/" + cname + appendName + ".java", false));
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
