@@ -21,7 +21,7 @@ public class TagFamilyGenerator {
 	private static int rotlim = -1; // write next entry at index
 
 	private static final long PRIME = 982451653;
-	
+
 	static {
 		if (d * d != nbits) {
 			System.out.println("WARNING: nbits is not a square. This code may do something stupid.\n");
@@ -132,11 +132,7 @@ public class TagFamilyGenerator {
 		}
 
 		// tag must be reasonably complex
-		if (computeComplexity(v) < mincomplexity) {
-			return false;
-		}
-
-		return true;
+		return (computeComplexity(v) >= mincomplexity);
 	}
 
 	public static TagFamily compute(final long V0) {
@@ -148,7 +144,7 @@ public class TagFamilyGenerator {
 		long lastprogresstime = starttime;
 		long lastprogressiters = 0;
 
-		System.out.printf("Using only one thread. V0=%d\n", V0);
+		System.out.printf("Computing bits=%d h=%d mincomplex=%d. Using only one thread. V0=%d\n", nbits, mincomplexity, minhamming, V0);
 
 		long iter = 0;
 		long chunksize = 500000;
