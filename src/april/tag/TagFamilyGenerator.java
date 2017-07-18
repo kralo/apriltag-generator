@@ -8,7 +8,7 @@ import java.util.Random;
 
 public class TagFamilyGenerator {
 	private final static int nbits = 36;
-	private final static int minhamming = 9;
+	private final static int minhamming = 11;
 	private final static int mincomplexity = 10;
 	private final static int d = (int) Math.sqrt(nbits);
 	private static long V0;
@@ -144,7 +144,7 @@ public class TagFamilyGenerator {
 		long lastprogresstime = starttime;
 		long lastprogressiters = 0;
 
-		System.out.printf("Computing bits=%d h=%d mincomplex=%d. Using only one thread. V0=%d\n", nbits, mincomplexity, minhamming, V0);
+		System.out.printf("Computing bits=%d h=%d mincomplex=%d. Using only one thread. V0=%d\n", nbits, minhamming,mincomplexity, V0);
 
 		long iter = 0;
 		long chunksize = 500000;
