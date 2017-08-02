@@ -7,13 +7,14 @@ import java.io.PrintStream;
 import java.util.Random;
 
 public class TagFamilyGenerator {
-	private final static int nbits = 36;
-	private final static int minhamming = 11;
-	private final static int mincomplexity = 10;
+	private final static int nbits = 16;
+	private final static int minhamming = 7;
+	private final static int mincomplexity = 5;
 	private final static int d = (int) Math.sqrt(nbits);
 	private static long V0;
 	private final static long maxnum = (1L << nbits);
 	private final static long maxnumm1 = maxnum - 1;
+	private final static boolean rotationInvariant = true;
 
 	private static long starttime;
 
@@ -89,7 +90,7 @@ public class TagFamilyGenerator {
 				TagFamilyGenerator.report("_" + V0);
 				bestCountCodes = res.codes.length;
 			}
-			System.out.format("found family with %d codes, best is now %d !", res.codes.length, bestCountCodes);
+			System.out.format("%d/%d: family with %d codes, best is %d !",i, maxruns, res.codes.length, bestCountCodes);
 		}
 		System.out.println("");
 		System.out.println("finished.");
@@ -99,35 +100,42 @@ public class TagFamilyGenerator {
 		long wr = 0;
 
 		for (int r = d - 1; r >= 0; r--) {
+			// for (int b = r; b <= r + d * (d - 1); b += d) {
+			int b = r;
 			for (int c = 0; c < d; c++) {
-				int b = r + d * c;
-
 				wr = wr << 1;
-
 				if ((w & (1L << b)) != 0)
 					wr |= 1;
-
+				b += d;
 			}
 		}
 		return wr;
 	}
 
 	private static boolean isCodeOkay(final long v) {
-		// The tag must be different from itself when rotated.
-		final long rv1 = rotate90(v);
-		final long rv2 = rotate90(rv1);
-		final long rv3 = rotate90(rv2);
+		if (rotationInvariant) {
+			// The tag must be different from itself when rotated.
+			final long rv1 = rotate90(v);
+			final long rv2 = rotate90(rv1);
+			final long rv3 = rotate90(rv2);
 
-		if (hammingDistanceTooLow(v ^ rv1) || hammingDistanceTooLow(v ^ rv2) || hammingDistanceTooLow(rv1 ^ rv2) || hammingDistanceTooLow(rv1 ^ rv3)
-				|| hammingDistanceTooLow(rv2 ^ rv3) || hammingDistanceTooLow(v ^ rv3)) {
-			return false;
-		}
-
-		// tag (and its rotations) must be different from other tags.
-		for (int i = 0; i <= rotlim; i++) {
-			if (hammingDistanceTooLow(v ^ codelist[i]) || hammingDistanceTooLow(rv1 ^ codelist[i]) || hammingDistanceTooLow(rv2 ^ codelist[i])
-					|| hammingDistanceTooLow(rv3 ^ codelist[i])) {
+			if (hammingDistanceTooLow(v ^ rv1) || hammingDistanceTooLow(v ^ rv2) || hammingDistanceTooLow(rv1 ^ rv2) || hammingDistanceTooLow(rv1 ^ rv3)
+					|| hammingDistanceTooLow(rv2 ^ rv3) || hammingDistanceTooLow(v ^ rv3)) {
 				return false;
+			}
+
+			// tag (and its rotations) must be different from other tags.
+			for (int i = 0; i <= rotlim; i++) {
+				if (hammingDistanceTooLow(v ^ codelist[i]) || hammingDistanceTooLow(rv1 ^ codelist[i]) || hammingDistanceTooLow(rv2 ^ codelist[i])
+						|| hammingDistanceTooLow(rv3 ^ codelist[i])) {
+					return false;
+				}
+			}
+		} else {
+			for (int i = 0; i <= rotlim; i++) {
+				if (hammingDistanceTooLow(v ^ codelist[i])) {
+					return false;
+				}
 			}
 		}
 
@@ -144,7 +152,8 @@ public class TagFamilyGenerator {
 		long lastprogresstime = starttime;
 		long lastprogressiters = 0;
 
-		System.out.printf("Computing bits=%d h=%d mincomplex=%d. Using only one thread. V0=%d\n", nbits, minhamming,mincomplexity, V0);
+		System.out.printf("Computing bits=%d h=%d mincomplex=%d. Rotation Invariant: %s. Using only one thread. V0=%d\n", nbits, minhamming, mincomplexity,
+				rotationInvariant ? "yes" : "no", V0);
 
 		long iter = 0;
 		long chunksize = 500000;
@@ -199,7 +208,7 @@ public class TagFamilyGenerator {
 				v &= maxnumm1;
 				if (isCodeOkay(v)) {
 					if (rotlim + 1 >= codelist.length) {
-						long[] newrot = new long[codelist.length + 1024];
+						long[] newrot = new long[codelist.length + 512];
 						System.arraycopy(codelist, 0, newrot, 0, codelist.length);
 						codelist = newrot;
 					}
@@ -229,6 +238,12 @@ public class TagFamilyGenerator {
 		return tagFamily;
 	}
 
+	public static void report(long[] codes, String filename) {
+		codelist = codes;
+		rotlim = codes.length - 1;
+		report(filename);
+	}
+
 	static void report(String appendName) {
 
 		String cname = String.format("Tag%dh%dc%d", nbits, minhamming, mincomplexity);
@@ -249,16 +264,20 @@ public class TagFamilyGenerator {
 		// compute hamming distance table
 		for (int i = 0; i < codes.length; i++) {
 			long rv0 = codes[i];
-			long rv1 = TagFamily.rotate90(rv0, d);
-			long rv2 = TagFamily.rotate90(rv1, d);
-			long rv3 = TagFamily.rotate90(rv2, d);
+			long rv1, rv2, rv3;
 
+			if (rotationInvariant) {
+				rv1 = TagFamily.rotate90(rv0, d);
+				rv2 = TagFamily.rotate90(rv1, d);
+				rv3 = TagFamily.rotate90(rv2, d);
+			}
 			for (int j = i + 1; j < codes.length; j++) {
-				int dist = Math.min(Math.min(TagFamily.hammingDistance(rv0, codes[j]), TagFamily.hammingDistance(rv1, codes[j])),
-						Math.min(TagFamily.hammingDistance(rv2, codes[j]), TagFamily.hammingDistance(rv3, codes[j])));
+				int dist = (rotationInvariant) ? Math.min(Math.min(TagFamily.hammingDistance(rv0, codes[j]), TagFamily.hammingDistance(rv1, codes[j])),
+						Math.min(TagFamily.hammingDistance(rv2, codes[j]), TagFamily.hammingDistance(rv3, codes[j]))) : TagFamily.hammingDistance(rv0, codes[j]);
 
 				hds[dist]++;
 				if (dist < minhamming) {
+					System.out.printf("%d %d %d %d", rv0, rv1, rv2, rv3);
 					System.out.printf("ERROR, dist = %3d: %d %d, val= %d %d\n", dist, i, j, codes[i], codes[j]);
 				}
 				// hdtotal++;
@@ -268,6 +287,8 @@ public class TagFamilyGenerator {
 		out.printf("\n\npackage april.tag.family;\n\n");
 		out.printf("\n\nimport april.tag.TagFamily;\n\n");
 		out.printf("/** Tag family with %d distinct codes.\n", codes.length);
+		if (!rotationInvariant)
+			out.printf("Tags are NOT ROTATION INVARIANT!.\n");
 		out.printf("    V0=%d\n", V0);
 		out.printf("    bits: %d,  minimum hamming: %d,  minimum complexity: %d\n\n", nbits, minhamming, mincomplexity);
 
@@ -328,7 +349,7 @@ public class TagFamilyGenerator {
 	}
 
 	private static int computeComplexity(long v) {
-		final int a[][] = new int[d][d];
+		final int[][] a = new int[d][d];
 
 		for (int y = 0; y < d; y++) {
 			for (int x = 0; x < d; x++) {
@@ -349,6 +370,23 @@ public class TagFamilyGenerator {
 		return Long.bitCount(w) < minhamming;
 	}
 
+	private static boolean isEqual(final int a[][], final int b[][]) {
+		// What is our error now?
+		// int error = 0;
+
+		for (int y = 0; y < d; y++)
+			for (int x = 0; x < d; x++)
+				if (a[y][x] != b[y][x])
+					// error++;
+					return false;
+
+		// are we done?
+		// if (error == 0)
+		// break;
+		return true;
+
+	}
+
 	/**
 	 * Given a 2D array of "pixels", what is the minimum number of rectangles
 	 * needed to draw that pattern? This is a measure of the complexity of the
@@ -361,42 +399,27 @@ public class TagFamilyGenerator {
 	 *
 	 * @param foo
 	 **/
-	private static int computeComplexity(final int d[][]) {
+	private static int computeComplexity(final int p[][]) {
 		final boolean verbose = false;
 
-		final int width = d[0].length, height = d.length;
-
-		final int out[][] = new int[height][width];
+		final int out[][] = new int[d][d];
 		int numrectangles = 0;
 
 		// initialize output to invalid color.
-		for (int y = 0; y < height; y++)
-			for (int x = 0; x < width; x++)
+		for (int y = 0; y < d; y++)
+			for (int x = 0; x < d; x++)
 				out[y][x] = -1;
 
-		while (true) {
-
-			// What is our error now?
-			int error = 0;
-
-			for (int y = 0; y < height; y++)
-				for (int x = 0; x < width; x++)
-					if (d[y][x] != out[y][x])
-						error++;
-
-			// are we done?
-			if (error == 0)
-				break;
-
+		while (!isEqual(p, out)) {
 			int bestimprovement = 0;
 			int besty0 = -1, bestx0 = -1, besty1 = -1, bestx1 = -1, bestv = -1;
 
 			// search over all rectangles: which one will reduce the
 			// error the most?
-			for (int y0 = 0; y0 < height; y0++) {
-				for (int y1 = y0; y1 < height; y1++) {
-					for (int x0 = 0; x0 < width; x0++) {
-						for (int x1 = x0; x1 < width; x1++) {
+			for (int y0 = 0; y0 < d; y0++) {
+				for (int y1 = y0; y1 < d; y1++) {
+					for (int x0 = 0; x0 < d; x0++) {
+						for (int x1 = x0; x1 < d; x1++) {
 
 							for (int v = 0; v < 2; v++) {
 
@@ -404,14 +427,14 @@ public class TagFamilyGenerator {
 
 								for (int y = y0; y <= y1; y++) {
 									for (int x = x0; x <= x1; x++) {
-										if (d[y][x] == out[y][x]) {
-											if (d[y][x] == v) {
+										if (p[y][x] == out[y][x]) {
+											if (p[y][x] == v) {
 												// no change, still right.
 											} else {
 												improvement--;
 											}
 										} else {
-											if (d[y][x] == v) {
+											if (p[y][x] == v) {
 												improvement++;
 											} else {
 												// no change, still wrong.

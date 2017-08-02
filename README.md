@@ -13,9 +13,8 @@ I have partially modified to make use of faster java operations and also convert
 |      |                 | 4                 | 5  | 6  | 7   | 8        | 9       | 10      | 11  |
 | 16   | 5               | 201               | 34 | 21 | 7   |          |         |         |     |
 | 25   | 8               |                   |    |    | 254 | 152      | 38      |         |     |
-| 36   | 10              |                   |    |    |     | >=23405* | >=5012* | 2642    | 589 |
+| 36   | 10              |                   |    |    |     | 31812    | 5375    | 2793    | 593 |
 
-( *= calculation did not finished. If you have >50 hours spare computing time, feel free to complete)
 
 ## Usage
 
@@ -25,12 +24,16 @@ compile the source with
 
 and then launch the generation. If you wanted to generate 36h11c10 tags, and let it do 2 rounds, you would do
 
-  java -cp april.jar april.tag.TagFamilyGenerator 36 11 10 2
+  java -cp april.jar april.tag.TagFamilyGenerator 2
 
 
 To generate the images from source,
 
   java -cp april.jar april.tag.TagFamily april.tag.family.Tag36h11c10 /tmp/tag36h11c10
+
+Useful for running in ec2:
+
+  screen -S april36h9c10 -d -m java -cp april36h9c10.jar april.tag.TagFamilyGenerator 100
 
 ## License
 
